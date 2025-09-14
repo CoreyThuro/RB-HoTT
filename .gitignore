@@ -1,0 +1,13 @@
+/build
+/.lake
+/lake-packages
+/lake-manifest.json
+/lean_packages
+/.elan
+*.olean
+*.trace
+__pycache__/
+.DS_Store
+.venv/
+.pytest_cache/
+.ipynb_checkpoints/
