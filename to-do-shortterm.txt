@@ -1,0 +1,172 @@
+1) Why this exists (the one-liner)
+
+Formal methods tell you it’s correct. RB-HOTT adds: and it fits within budget—with machine-checkable certificates.
+
+2) What we have today (compiling)
+
+Repo modules you can open now:
+
+RBHOTT.Res — Resource algebra
+ResCtx = {time, memory, depth}, preorder ≤, monoid ⊕ with lemmas (assoc/comm/monotone).
+
+RBHOTT.Core — FeasibleNat under a budget; closure under addition; widen along R ≤ S.
+
+RBHOTT.CoreLang — Tiny STLC (Unit/Nat/→/×)
+Typing, values, substitution, small-step Step, multistep cost Steps k t u.
+Example: t_idsucc reduces in 1 step; theorem eval_idsucc.
+
+RBHOTT.RType — Resource-typed judgments
+hasRType Γ R t A b synthesizes bound b; example idsucc_bound : … b = 1.
+
+RBHOTT.Modal — Availability modality (◻R A) skeleton with intro/elim/widen.
+
+RBHOTT.Semantics — Mini presheaf scaffold over the resource category (objects = budgets; morphisms = inclusions). Example presheaf clamps feasibility by min.
+
+Proof costing & budgets for CI:
+
+RBHOTT.ProofCost — deterministic structural metrics on proof terms (size, apps, …).
+
+RBHOTT.Budget — persistent budgets + checks:
+#rb_cost Foo, #rb_set_budget Foo size N, #rb_check Foo.
+
+RBHOTT.BudgetDemo — wrapper theorem with enforced budget.
+
+Docs: INTRO.md, SPEC.md, DESIGN.md, COSTING.md.
+
+Build/run:
+
+ lake build
+lake exe rbhott
+Budget instrumentation (inside a .lean file):
+
+#rb_cost idsucc_exists_value_wrapper
+#rb_set_budget idsucc_exists_value_wrapper size 80
+#rb_check idsucc_exists_value_wrapper
+3) Design choice (pragmatic & reviewable)
+
+We don’t alter the Lean kernel.
+
+We deep-embed the type theory (now STLC → Π/Σ/Id next), add cost semantics & RB typing, and prove soundness in a presheaf model over the resource category.
+
+Univalence/HITs: not kernel-native in Lean 4; we’ll scope them later (axiomatic in the embedding and validated in models where feasible).
+
+Architecture sketch
+
+           +---------------------------+
+           |   Proof Costing & Budget  |  (#rb_cost / #rb_check)  ← CI gate
+           +---------------------------+
+                         |
++-----------------------------+       +-------------------------+
+|  CoreLang (syntax/typing)   |  -->  |  RType (RB typing, b)  |  ==> existence of k ≤ b
+|  Step / Steps (cost)        |       |  lemmas: comp/monotone |
++-----------------------------+       +-------------------------+
+                         \                     /
+                          \                   /
+                           v                 v
+                    +-------------------------------+
+                    |   Semantics (Presheaf on Res) |
+                    |   Soundness & feasibility     |
+                    +-------------------------------+
+4) What “win” looks like (short-term)
+
+For a closed term t, we can synthesize b s.t. Steps k t v with k ≤ b, and also relate b ≤ R.time under a context budget R.
+
+CI blocks merges if proof/cost exceeds stored budgets (mathlib included via wrappers).
+
+5) Near-term roadmap (each bullet = one clean PR)
+
+PR-01 — Tie cost to resources (time)
+
+Add runsWithin R k := k ≤ R.time.
+
+Lemmas: composition & monotonicity under ⊕ and ≤.
+
+Example suite verifying k ≤ b ≤ R.time for small closed terms.
+Exit: tests; CI green.
+
+PR-02 — RB typing (composition laws) → soundness wrt Steps
+
+Finalize rules for hasRType Γ R t A b (app adds +1, pairs add, etc.).
+
+Theorem: hasRType … b ⇒ ∃v, Steps k t v ∧ k ≤ b.
+Exit: constructive proofs in repo; no sorry.
+
+PR-03 — Type safety with bounds
+
+Progress/preservation for STLC and bound preservation across Step.
+
+Monotonicity under R ≤ S.
+Exit: proofs land; CI lints RB invariants.
+
+PR-04 — Dependent core shell
+
+Add Π/Σ/Id (Martin-Löf style) to the deep embedding, compile-only.
+
+No univalence yet.
+Exit: builds; examples for dependent pair/projection.
+
+PR-05 — Proper RB modality (graded, left-exact)
+
+Formalize ◻R as graded (co)modal operator; show it preserves Π/Σ/Id where expected.
+
+Derive weakening along R ≤ S.
+Exit: basic theorems + examples.
+
+PR-06 — Universe strata 𝒰_R
+
+Stratified universes with cumulative embeddings when R ≤ S.
+Exit: encodings for base types inside 𝒰_R.
+
+(Parallel) Proof costs: emit JSON to cost/, add linter “exported theorems must have budgets.”
+
+6) How mathlib fits (today)
+
+We don’t fork mathlib.
+
+To “cost” a mathlib theorem, we create a wrapper in our namespace and attach a budget:
+
+theorem my_wrapper : _ := by exact Mathlib.Some.deepTheorem
+#rb_cost my_wrapper
+#rb_set_budget my_wrapper size 12000
+#rb_check my_wrapper
+CI fails if future changes inflate the proof term.
+
+7) Demos we can ship quickly
+
+Bounded evaluation: small closed STLC programs with synthesized b and k ≤ b ≤ R.time.
+
+Budget-gated lemma: a mathlib wrapper with a stored budget that fails on intentional bloat.
+
+Presheaf feasibility: show restriction (budget decrease) behaves via clamping (min) in FeasibleNatPsh.
+
+8) Risks & mitigations
+
+Univalence/HITs in Lean 4: not native.
+Mitigation: keep them axiomatic in the embedding; validate in categorical models; optionally mirror a few examples in Cubical Agda (out-of-core).
+
+Over-engineering early:
+Mitigation: keep PRs small; no sorry in core; examples first.
+
+9) Contribution shape (so we don’t step on toes)
+
+Branch per PR (e.g., feat/runsWithin, feat/rb-typing), <500 LOC per PR ideally.
+
+Each PR: docs paragraph + 2–3 example lemmas + CI checks.
+
+No global refactors in PRs that add theorems.
+
+10) What I need from you, Corey
+
+Sanity-check the RB typing rule set (does +1 at app meet your intuition?).
+
+Preference on budget policy: project-wide default or per-namespace?
+
+OK to adopt a linter: “every exported theorem must have a budget” (on by default)?
+
+11) TL;DR for reviewers
+
+We already have compiling code for resources, costed steps, RB typing (example), presheaf scaffold, and proof-cost budgets.
+
+Next 2–3 PRs connect k to R.time, prove soundness, and enforce budgets in CI.
+
+Deliverable: proof-carrying resources on top of Lean4/mathlib—usable in real pipelines.
