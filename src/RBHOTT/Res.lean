@@ -14,6 +14,15 @@ def ResCtx.le (R S : ResCtx) : Prop :=
 instance : LE ResCtx where
   le := ResCtx.le
 
+@[simp] theorem le_refl (R : ResCtx) : R ≤ R := by
+  exact ⟨Nat.le_refl _, Nat.le_refl _, Nat.le_refl _⟩
+
+theorem le_trans {R S T : ResCtx} : R ≤ S → S ≤ T → R ≤ T := by
+  intro h1 h2
+  exact ⟨Nat.le_trans h1.1 h2.1,
+         Nat.le_trans h1.2.1 h2.2.1,
+         Nat.le_trans h1.2.2 h2.2.2⟩
+
 /-- A simple composition of resources (sequential composition).
     Time and memory add; depth takes the maximum. -/
 def ResCtx.add (R S : ResCtx) : ResCtx :=
@@ -23,8 +32,54 @@ def ResCtx.add (R S : ResCtx) : ResCtx :=
 
 infixl:65 " ⊕ " => ResCtx.add
 
-@[simp] theorem le_refl (R : ResCtx) : R ≤ R := by
-  exact ⟨Nat.le_refl _, Nat.le_refl _, Nat.le_refl _⟩
+-- monotonicity
+@[simp] theorem add_mono_left {R R' S : ResCtx} : R ≤ R' → (R ⊕ S) ≤ (R' ⊕ S) := by
+  intro h
+  constructor
+  · exact Nat.add_le_add h.1 (Nat.le_refl S.time)
+  constructor
+  · exact Nat.add_le_add h.2.1 (Nat.le_refl S.memory)
+  · -- Need: (R ⊕ S).depth ≤ (R' ⊕ S).depth
+    -- which is: max R.depth S.depth ≤ max R'.depth S.depth
+    by_cases hc : R.depth ≤ S.depth
+    · -- When R.depth ≤ S.depth: max becomes S.depth on both sides
+      calc (R ⊕ S).depth
+          = Nat.max R.depth S.depth := rfl
+        _ = S.depth := Nat.max_eq_right hc
+        _ ≤ Nat.max R'.depth S.depth := Nat.le_max_right _ _
+        _ = (R' ⊕ S).depth := rfl
+    · -- When R.depth > S.depth: max becomes R.depth and R'.depth
+      have hlt : S.depth < R.depth := Nat.not_le.mp hc
+      calc (R ⊕ S).depth
+          = Nat.max R.depth S.depth := rfl
+        _ = R.depth := Nat.max_eq_left (Nat.le_of_lt hlt)
+        _ ≤ R'.depth := h.2.2
+        _ ≤ Nat.max R'.depth S.depth := Nat.le_max_left _ _
+        _ = (R' ⊕ S).depth := rfl
+
+@[simp] theorem add_mono_right {R S S' : ResCtx} : S ≤ S' → (R ⊕ S) ≤ (R ⊕ S') := by
+  intro h
+  constructor
+  · exact Nat.add_le_add (Nat.le_refl R.time) h.1
+  constructor
+  · exact Nat.add_le_add (Nat.le_refl R.memory) h.2.1
+  · -- Need: (R ⊕ S).depth ≤ (R ⊕ S').depth
+    -- which is: max R.depth S.depth ≤ max R.depth S'.depth
+    by_cases hc : S.depth ≤ R.depth
+    · -- When S.depth ≤ R.depth: max becomes R.depth on both sides
+      calc (R ⊕ S).depth
+          = Nat.max R.depth S.depth := rfl
+        _ = R.depth := Nat.max_eq_left hc
+        _ ≤ Nat.max R.depth S'.depth := Nat.le_max_left _ _
+        _ = (R ⊕ S').depth := rfl
+    · -- When S.depth > R.depth: max becomes S.depth and S'.depth
+      have hlt : R.depth < S.depth := Nat.not_le.mp hc
+      calc (R ⊕ S).depth
+          = Nat.max R.depth S.depth := rfl
+        _ = S.depth := Nat.max_eq_right (Nat.le_of_lt hlt)
+        _ ≤ S'.depth := h.2.2
+        _ ≤ Nat.max R.depth S'.depth := Nat.le_max_right _ _
+        _ = (R ⊕ S').depth := rfl
 
 @[simp] theorem add_time   (R S : ResCtx) : (R ⊕ S).time   = R.time + S.time := rfl
 @[simp] theorem add_memory (R S : ResCtx) : (R ⊕ S).memory = R.memory + S.memory := rfl
