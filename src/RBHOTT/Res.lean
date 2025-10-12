@@ -23,6 +23,10 @@ theorem le_trans {R S T : ResCtx} : R ≤ S → S ≤ T → R ≤ T := by
          Nat.le_trans h1.2.1 h2.2.1,
          Nat.le_trans h1.2.2 h2.2.2⟩
 
+-- Enable calc mode for ≤ chains
+instance : Trans (α := ResCtx) (· ≤ ·) (· ≤ ·) (· ≤ ·) where
+  trans := le_trans
+
 /-- A simple composition of resources (sequential composition).
     Time and memory add; depth takes the maximum. -/
 def ResCtx.add (R S : ResCtx) : ResCtx :=
