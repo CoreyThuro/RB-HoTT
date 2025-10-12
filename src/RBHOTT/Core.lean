@@ -2,14 +2,12 @@ import RBHOTT.Res
 
 namespace RBHOTT
 
-/-- Feasible natural numbers relative to a resource context `R`.
-    A value is feasible if it's within a bound that fits in the resource's time budget. -/
 structure FeasibleNat (R : ResCtx) where
   val   : Nat
   bound : Nat
   val_le_bound  : val ≤ bound
   bound_le_time : bound ≤ R.time
-deriving Repr
+deriving Repr, DecidableEq
 
 namespace FeasibleNat
 
