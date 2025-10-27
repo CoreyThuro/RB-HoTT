@@ -1,4 +1,8 @@
 import RBHOTT.Res
+import RBHOTT.Core.Modality
+import RBHOTT.Core.STLC
+import RBHOTT.Core.OpCost
+import RBHOTT.Core.Recursion
 
 namespace RBHOTT
 
