@@ -89,4 +89,33 @@ infixl:65 " ⊕ " => ResCtx.add
 @[simp] theorem add_memory (R S : ResCtx) : (R ⊕ S).memory = R.memory + S.memory := rfl
 @[simp] theorem add_depth  (R S : ResCtx) : (R ⊕ S).depth  = Nat.max R.depth S.depth := rfl
 
+/-! ## Monoid Laws
+
+ResCtx forms a commutative monoid under ⊕ with identity element zero.
+These laws enable algebraic reasoning about resource composition.
+-/
+
+/-- The identity element for resource addition. -/
+def ResCtx.zero : ResCtx := { time := 0, memory := 0, depth := 0 }
+
+/-- Associativity: (A ⊕ B) ⊕ C = A ⊕ (B ⊕ C) -/
+theorem add_assoc (A B C : ResCtx) : ResCtx.add (ResCtx.add A B) C = ResCtx.add A (ResCtx.add B C) := by
+  unfold ResCtx.add
+  simp only [Nat.add_assoc, Nat.max_assoc]
+
+/-- Commutativity: A ⊕ B = B ⊕ A -/
+theorem add_comm (A B : ResCtx) : ResCtx.add A B = ResCtx.add B A := by
+  unfold ResCtx.add
+  simp only [Nat.add_comm, Nat.max_comm]
+
+/-- Right identity: A ⊕ zero = A -/
+theorem add_zero (A : ResCtx) : ResCtx.add A ResCtx.zero = A := by
+  unfold ResCtx.add ResCtx.zero
+  simp only [Nat.add_zero, Nat.max_zero]
+
+/-- Left identity: zero ⊕ A = A -/
+theorem zero_add (A : ResCtx) : ResCtx.add ResCtx.zero A = A := by
+  unfold ResCtx.add ResCtx.zero
+  simp only [Nat.zero_add, Nat.zero_max]
+
 end RBHOTT
