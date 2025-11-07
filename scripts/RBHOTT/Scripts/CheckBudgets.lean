@@ -95,6 +95,12 @@ def validateAllProofs (measurements : List (Name × ResCtx)) (verbose : Bool) :
     IO (List BudgetCheckResult) := do
   let results := batchValidate measurements
 
+  -- Debug: Show what we're validating
+  IO.println "📋 Validating measurements:"
+  for (name, measured) in measurements do
+    IO.println s!"  {name}: time={measured.time}, memory={measured.memory}, depth={measured.depth}"
+  IO.println ""
+
   if verbose then
     IO.println "📊 Detailed Validation Results:\n"
     for result in results do
@@ -163,11 +169,13 @@ def main (args : List String) : IO UInt32 := do
   IO.println s!"Tracked proofs: {trackedProofs.length}"
   IO.println ""
 
-  -- List tracked proofs
+  -- List tracked proofs with their baselines
   if verbose then
-    IO.println "📋 Tracked proofs:"
+    IO.println "📋 Tracked proofs and baselines:"
     for name in trackedProofs do
-      IO.println s!"   - {name}"
+      match getBaseline name with
+      | none => IO.println s!"   - {name}: NO BASELINE"
+      | some baseline => IO.println s!"   - {name}: time={baseline.time}, memory={baseline.memory}, depth={baseline.depth}"
     IO.println ""
 
   -- Simulate measurements
