@@ -1,7 +1,6 @@
 /build
 /.lake
 /lake-packages
-/lake-manifest.json
 /lean_packages
 /.elan
 *.olean
@@ -12,3 +11,5 @@ __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
 /.serena
+claudeactionlist.md
+claudedocs/

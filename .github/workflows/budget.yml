@@ -27,18 +27,23 @@ jobs:
       run: lake build
 
     - name: Check Resource Budgets
+      id: check-budgets
+      continue-on-error: true
       run: lake exe check-budgets --verbose
 
     - name: Report status
       if: always()
       run: |
-        if [ $? -eq 0 ]; then
+        EXIT_CODE=${{ steps.check-budgets.outcome }}
+
+        if [ "$EXIT_CODE" = "success" ]; then
           echo "✅ All proofs within budget"
-        elif [ $? -eq 1 ]; then
+          exit 0
+        elif [ "$EXIT_CODE" = "failure" ]; then
           echo "❌ Budget regressions detected!"
+          echo "Review budget changes or update baselines in Infra/BudgetRecords.lean"
           exit 1
-        elif [ $? -eq 2 ]; then
-          echo "⚠️  Missing budget baselines"
-          echo "Run 'lake exe check-budgets --record' to establish baselines"
-          exit 0  # Don't fail on missing baselines (yet)
+        else
+          echo "⚠️  Check-budgets step had unexpected outcome: $EXIT_CODE"
+          exit 1
         fi
