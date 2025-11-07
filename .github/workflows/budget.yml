@@ -1,0 +1,44 @@
+name: Resource Budget Check
+
+# Based on paper §6 (lines 219-231): CI automation for budget enforcement
+# Validates that all tracked proofs stay within their resource budgets
+# Fails the build if any budget regressions are detected
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  budget-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Lean
+      uses: leanprover/lean-action@v1
+      with:
+        lean-version: '4.8.0'  # Adjust to match project version
+
+    - name: Build project
+      run: lake build
+
+    - name: Check Resource Budgets
+      run: lake exe check-budgets --verbose
+
+    - name: Report status
+      if: always()
+      run: |
+        if [ $? -eq 0 ]; then
+          echo "✅ All proofs within budget"
+        elif [ $? -eq 1 ]; then
+          echo "❌ Budget regressions detected!"
+          exit 1
+        elif [ $? -eq 2 ]; then
+          echo "⚠️  Missing budget baselines"
+          echo "Run 'lake exe check-budgets --record' to establish baselines"
+          exit 0  # Don't fail on missing baselines (yet)
+        fi

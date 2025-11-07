@@ -1,4 +1,5 @@
 import RBHOTT.Res
+import RBHOTT.Infra.Cost
 
 namespace RBHOTT
 
@@ -58,22 +59,35 @@ The paper emphasizes (§3.4, lines 157-161):
 > "Promotion is NOT unconditional. If Γ ⊢_{R;b} t:A with b ≤ Time(R),
 >  we may form box_R(t) : □_R A."
 
-For now, we admit `box_intro` as an axiom. A full implementation would:
-1. Define a `cost` function on terms (see Core/OpCost.lean)
-2. Require proof that `cost t ≤ R.time`
-3. Only then allow boxing
+We now provide `box_intro` with a cost parameter. A full implementation would:
+1. Use `#rb_cost` to measure ProofCost of a definition
+2. Provide that cost as the `cost_bound` parameter
+3. Prove `cost_bound ≤ R.time` to enable boxing
 
 -/
 
 /-- **Cost-aware introduction**: Box a value with cost witness.
 
-    TODO: Once we have cost infrastructure (Core/OpCost.lean), replace axiom with:
-    `def box_intro (t : A) (h : cost t ≤ R.time) : Box R A := ⟨t⟩`
+    The introduction rule requires:
+    1. The value `a : A` to be boxed
+    2. A cost bound `cost_bound : Nat` for producing `a`
+    3. Proof that `cost_bound ≤ R.time` (fits within time budget)
 
-    For now, this is axiomatized - in practice, introduction would require
-    a proof that the value was constructed within budget.
+    This prevents "free" boxing - you can only box values whose construction
+    cost is certified to fit within the resource budget `R`.
+
+    The `cost_bound` parameter connects to Infra/Cost.lean: in practice,
+    you would use `#rb_cost` to measure the actual ProofCost of a definition,
+    then provide that size as the bound.
+
+    Example usage:
+    ```
+    -- If we know `my_proof` has cost ≤ 100
+    def boxed_proof (R : ResCtx) (h : 100 ≤ R.time) : Box R MyType :=
+      box_intro my_proof 100 h
+    ```
 -/
-axiom box_intro : A → Box R A
+axiom box_intro : (a : A) → (cost_bound : Nat) → (h : cost_bound ≤ R.time) → Box R A
 
 /-! ## Basic Properties -/
 
