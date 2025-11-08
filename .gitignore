@@ -11,5 +11,8 @@ __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
 /.serena
+/.claude
 claudeactionlist.md
+claude-suggestions.md
+corey_action_list.md
 claudedocs/
