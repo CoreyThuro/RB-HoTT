@@ -1,4 +1,4 @@
-# RB-HoTT: Resource-Bounded Homotopy Type Theory
+# RB-TT: Resource-Bounded Type Theory
 
 **A formal verification framework for resource-certified mathematics and programs in Lean 4**
 
@@ -8,7 +8,7 @@
 
 ## Overview
 
-RB-HoTT extends type theory to certify both **correctness** and **computational costs**—worst-case time, memory, and recursion depth. This Lean 4 implementation provides a foundation for proof-carrying resources where proofs guarantee both functional correctness and resource compliance.
+RB-TT extends type theory to certify both **correctness** and **computational costs**—worst-case time, memory, and recursion depth. This Lean 4 implementation provides a foundation for proof-carrying resources where proofs guarantee both functional correctness and resource compliance.
 
 ### Key Features
 
@@ -35,7 +35,7 @@ curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf 
 lake build
 
 # Run the demo
-lake exe rbhott
+lake exe rbTT
 
 # Build and run tests (when added to lakefile)
 lake build Examples.ResPropsTest
@@ -44,7 +44,7 @@ lake build Examples.ResPropsTest
 ### Expected Output
 
 ```
-RB-HoTT: Resource-Bounded Homotopy Type Theory
+RB-TT: Resource-Bounded Homotopy Type Theory
 ===============================================
 
 Resource Context: { time := 100, memory := 2048, depth := 5 }
@@ -65,7 +65,7 @@ x in S still has val=15, bound=20
 
 ```
 src/
-  RBHOTT/
+  RBTT/
     Res.lean                 -- Resource contexts (time, memory, depth)
     Core.lean                -- Main exports
     Core/
@@ -164,7 +164,7 @@ If `Γ ⊢_{R;b} t : A` and `t` is closed, then:
 
 ## Alignment with Paper
 
-This implementation follows the **revised arxiv paper** (RB-HoTT_arxiv_revised.tex):
+This implementation follows the **revised arxiv paper** (RB-TT_arxiv_revised.tex):
 
 - **§3.1 Resource Algebra** ✅ Fully implemented
 - **§3.2 STLC + Typing** ✅ Core complete
@@ -259,7 +259,7 @@ This is a research prototype. Contributions welcome for:
 
 ## References
 
-- **Paper:** RB-HoTT_arxiv_revised.tex (Sept 2025)
+- **Paper:** RB-TT_arxiv_revised.tex (Sept 2025)
 - **Action List:** claudeactionlist.md
 - **Gap Analysis:** claude-suggestions.md
 - **Implementation Report:** `.serena/memories/items_1_2_completion_report.md`
